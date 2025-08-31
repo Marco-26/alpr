@@ -16,14 +16,6 @@ API: External API for retrieving vehicle details (e.g., brand, model, motor).
 Dataset:
 Car License Plate Detection Dataset (Dataset Ninja, 433 images, CC0 1.0) or UFPR-ALPR (1,500 images, academic use).
 
-
-Timeline: 1-2 weeks (~10-15 hours part-time).
-Deliverables:
-GitHub repository with source code.
-Comprehensive README.
-Sample output images.
-Demo video showcasing real-time inference.
-
 # Features
 
 License Plate Detection: Accurately localizes license plates in images or video frames using YOLOv8.
