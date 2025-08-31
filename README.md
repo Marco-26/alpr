@@ -1,4 +1,4 @@
-#Vehicle License Plate Recognition and Information Retrieval
+# Vehicle License Plate Recognition and Information Retrieval
 
 A project to detect and extract vehicle license plate information from images or real-time camera feeds, providing details such as the vehicle's brand, model, and specifications using an API. This project showcases computer vision and AI skills, including object detection, OCR, and real-time inference on mobile devices.
 Overview
