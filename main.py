@@ -1,21 +1,27 @@
-from ultralytics import YOLO
+from detect import Detector
+from extract import Extractor
+from utils import is_image
 from PIL import Image
+import os 
+import sys
+import numpy as np
 
-model = YOLO("/Users/mcosta/dev/alpr/runs/detect/train/weights/best.pt")
-model.info()
+img_path = 'matricula.jpg'
+detector = Detector()
+extractor = Extractor()
 
-#finetuning the model to portuguese licence plates
-#results = model.train(data="./data/data.yaml", epochs=20, imgsz=640, device='mps')
-#print(results)
+if __name__ == "__main__": 
+  if not os.path.exists(img_path):
+    print('File provided does not exists')
+    sys.exit(1)
 
-img_path = './matricula2.jpg'
-
-result = model(img_path)
-result[0].show()
-
-xyxy = result[0].boxes.xyxy.numpy()
-(a,b,c,d) = xyxy[0]
-
-img = Image.open(img_path)
-resized = img.crop((a,b,c,d))
-resized.show()
+  if not is_image(img_path):
+    print('File provided is not an image')
+    sys.exit(1)
+  
+  img: Image = detector.inference(img_path)
+  img_array = np.array(img)
+  text = extractor.inference(img_array)
+  
+  print(f'Text from the extractor {text}')
+  
