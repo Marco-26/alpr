@@ -53,24 +53,6 @@ Sample outputs:
 View sample results in the outputs/ directory.
 Watch the demo video (demo.mp4) for a live example.
 
-
-
-# Project Structure
-vehicle-license-plate-recognition/
-├── config/                 # API keys and configuration files
-├── data/                   # Datasets and annotations
-├── models/                 # Pre-trained YOLOv8 and OCR models
-├── outputs/                # Cropped plates and sample results
-├── src/                    # Source code
-│   ├── detection.py        # YOLOv8 license plate detection
-│   ├── ocr.py              # EasyOCR text extraction
-│   ├── postprocess.py      # Text validation and correction
-│   ├── vehicle_info.py     # API integration for vehicle details
-│   └── main.py             # Main script for inference
-├── requirements.txt        # Python dependencies
-├── README.md               # This file
-└── demo.mp4                # Demo video
-
 # Roadmap
 1. Dataset Collection & Preparation
 
