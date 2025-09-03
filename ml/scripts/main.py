@@ -6,7 +6,7 @@ import os
 import sys
 import numpy as np
 
-img_path = 'matricula.jpg'
+img_path = '/Users/mcosta/dev/alpr/traffic_multiple_cars.png'
 detector = Detector()
 extractor = Extractor()
 
@@ -20,8 +20,7 @@ if __name__ == "__main__":
     sys.exit(1)
   
   img: Image = detector.inference(img_path)
-  img_array = np.array(img)
-  text = extractor.inference(img_array)
+  # img_array = np.array(img)
+  # text = extractor.inference(img_array)
   
-  print(f'Text from the extractor {text}')
-  
+  # print(f'Text from the extractor {text}')
