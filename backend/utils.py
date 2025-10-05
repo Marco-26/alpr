@@ -1,4 +1,5 @@
 from PIL import Image
+import io
 
 def is_image_path(img_path:str) -> bool:
   try:
@@ -9,9 +10,9 @@ def is_image_path(img_path:str) -> bool:
     print("Error")
     return False
 
-def is_image_obj(img_obj: Image) -> bool:
+def is_image_obj(img_bytes: bytes) -> bool:
   try:
-    with img_obj.open() as img:
+    with Image.open(io.BytesIO(img_bytes)) as img:
       img.verify()
       return True
   except:

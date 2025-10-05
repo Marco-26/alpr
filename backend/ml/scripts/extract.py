@@ -1,4 +1,18 @@
 import easyocr
+import re
+
+from .constants import PORTUGUESE_LICENSE_PLATE_REGEX
+from dataclasses import dataclass
+
+@dataclass
+class ExtractionResult:
+  plate: str | None
+  confidence: float
+  error: str | None = None
+  
+  @property
+  def succeeded(self) -> bool:
+    return self.error is None and self.plate is not None
 
 class Extractor:
   def __init__(self):
@@ -23,8 +37,11 @@ class Extractor:
     # this model has trouble diferentiating 0 and O. Maybe finetune it aswell?
     (_, text, conf) = result[0]
 
-    normalized = self.normalize(text)
-    
-    if normalized:
-      return {"text": normalized, "conf":conf}
+    plate_normalized = self.normalize(text)
+    regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, plate_normalized)
+    if not regex_val:
+      return ExtractionResult(plate="No Match", confidence=0, error="Regex didn't match")
+      
+    if plate_normalized:
+      return ExtractionResult(plate=plate_normalized, confidence=conf.item(), error="")
       

@@ -13,14 +13,12 @@ class Detector:
     results = model.train(data=data, epochs=epochs, imgsz=img_size, device=device)
     print(results)
   
-  def inference(self, img_path) -> Image:
+  def inference(self, img: Image) -> Image:
     # right now, this only works on images of one car
-    result = self.model(img_path)
+    result = self.model(img)
     xyxy = result[0].boxes.xyxy.numpy()
     (a,b,c,d) = xyxy[0]
 
-    with Image.open(img_path) as img:
-      resized = img.crop((a,b,c,d))
+    resized = img.crop((a,b,c,d))
       
     return resized
-
