@@ -1,8 +1,9 @@
 import easyocr
 import re
 
-from .constants import PORTUGUESE_LICENSE_PLATE_REGEX
+from constants import PORTUGUESE_LICENSE_PLATE_REGEX
 from dataclasses import dataclass
+from utils import apply_substitutions_rules
 
 @dataclass
 class ExtractionResult:
@@ -38,9 +39,7 @@ class Extractor:
     (_, text, conf) = result[0]
 
     plate_normalized = self.normalize(text)
-    regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, plate_normalized)
-    if not regex_val:
-      return ExtractionResult(plate="No Match", confidence=0, error="Regex didn't match")
+    
       
     if plate_normalized:
       return ExtractionResult(plate=plate_normalized, confidence=conf.item(), error="")
