@@ -6,6 +6,7 @@ from PIL import Image
 
 from ml.scripts.detect import Detector
 from ml.scripts.extract import Extractor
+from ml.scripts.post_processor import PostProcessor
 import numpy as np
 
 from pydantic import BaseModel
@@ -15,6 +16,7 @@ from utils import is_image_obj as is_image
 app = FastAPI()
 detector = Detector()
 extractor = Extractor()
+post_processor = PostProcessor()
 
 class InferenceSuccess(BaseModel):
     success: bool = True
@@ -37,12 +39,12 @@ async def inference(img: UploadFile = File(...)):
    
   with Image.open(io.BytesIO(img_bytes)) as img:
     cropped = detector.inference(img)
-    
-    arr_img = np.array(cropped)
-    extraction = extractor.inference(arr_img)
+    extraction = extractor.inference(np.array(cropped))
 
-  if extraction.succeeded:
-    return InferenceSuccess(plate=extraction.plate, confidence=extraction.confidence)
-  
+  if extraction.plate:
+    final_plate = post_processor.validate(extraction.plate)
+    print("Got final plate: ", final_plate, " : ", type(final_plate))
+    return InferenceSuccess(plate=final_plate, confidence=extraction.confidence)
+
   return InferenceFailure(error=extraction.error or "Unknown extraction failure")
   
