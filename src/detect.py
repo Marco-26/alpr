@@ -1,12 +1,13 @@
 from ultralytics import YOLO
 from PIL import Image
+import constants
 
 #TODO: Use case : Multiple cars on picture.
 #TODO: Train this model with bigger dataset and with images with multiple vehicles.
 
 class Detector:
   def __init__(self):
-    self.model = YOLO("/Users/mcosta/dev/alpr/backend/ml/runs/detect/train/weights/best.pt")
+    self.model = YOLO(constants.YOLO_MODEL_PATH)
   
   def finetune(self, variation, data, epochs, img_size, device):
     model = YOLO(variation)

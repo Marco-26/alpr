@@ -1,5 +1,7 @@
 PORTUGUESE_LICENSE_PLATE_REGEX="(?:[A-Z]{2}[0-9]{2}[A-Z]{2}|[0-9]{2}[A-Z]{2}[0-9]{2})"
 
+YOLO_MODEL_PATH = "/Users/mcosta/dev/alpr/outputs/runs/detect/train/weights/best.pt"
+
 CONFUSION_PAIRS = {
   'I':'1',
   '1': 'I',

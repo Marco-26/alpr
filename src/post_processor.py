@@ -1,12 +1,11 @@
 import re
-from .constants import PORTUGUESE_LICENSE_PLATE_REGEX, PATTERNS, CONFUSION_PAIRS
+from constants import PORTUGUESE_LICENSE_PLATE_REGEX, PATTERNS, CONFUSION_PAIRS
 
 class PostProcessor:
   def __init__(self):
     pass
   
   def validate(self, raw_plate:str):
-    print("YO")
     regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, raw_plate)
     if not regex_val:
       # If program reach here, try to apply substitution rules

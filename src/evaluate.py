@@ -1,6 +1,7 @@
 from post_processor import PostProcessor
 from extract import Extractor
 from detect import Detector
+import os
 
 extractor = Extractor()
 detector = Detector()
@@ -11,5 +12,7 @@ processor = PostProcessor()
 
 # To evaluate the extractor also measure the confidence so we can see how the confidence correlates with accuracy.
 
+images_dir = "/Users/mcosta/dev/alpr/outputs/data/train/images"
+
 if __name__ == "__main__":
-  pass
+  print(len(os.listdir(images_dir)))
