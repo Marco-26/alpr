@@ -17,6 +17,11 @@ class Detector:
   def inference(self, img: str) -> Image:
     result = self.model(img)
     xyxy = result[0].boxes.xyxy.numpy()
+    
+    if len(xyxy) == 0:
+      print("Could not detect a licence plate")
+      return
+    
     (a,b,c,d) = xyxy[0]
 
     resized = img.crop((a,b,c,d))
