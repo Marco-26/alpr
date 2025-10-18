@@ -1,8 +1,9 @@
 from post_processor import PostProcessor
 from extract import Extractor
 from detect import Detector
-import glob
 from PIL import Image
+import glob
+import pandas as pd
 
 extractor = Extractor()
 detector = Detector()
@@ -16,11 +17,14 @@ processor = PostProcessor()
 images_dir = "/Users/mcosta/dev/alpr/outputs/data/train/images"
 images_files = glob.glob(f'{images_dir}/*.jpg')
 
+base_ocr_images = glob.glob("/Users/mcosta/dev/alpr/ocr_eval_images/*.jpg")
+labels = "ocr_eval_labels.csv"
+
 if __name__ == "__main__":
-  for index, image_path in enumerate(images_files):
+  csv = pd.read_csv(labels)
+  for index, image_path in enumerate(base_ocr_images):
     with Image.open(image_path) as img:
-      print(image_path)
-      image = detector.inference(img)
-      if image:
-        image.save(f"./test_images/{index}.jpg")
+      result = extractor.inference(img)
+      print(result.plate)
+        
     

@@ -1,6 +1,7 @@
 import easyocr
 from dataclasses import dataclass
-
+import re
+from constants import PORTUGUESE_LICENSE_PLATE_REGEX
 @dataclass
 class ExtractionResult:
   plate: str | None
@@ -17,25 +18,22 @@ class Extractor:
   
   def normalize(self, text:str) -> str:
     text = text.replace(" ", "")
-    
-    # Portugal case
-    if len(text) == 6 or len(text) == 8:
-      return text
-    
-    return ""
+    norm_text = re.sub(r'[^A-Za-z0-9]', '',text)
+    return norm_text.upper()
 
-  #TODO: Use character confusion matrix and calculate confidence
   def inference(self, img) -> dict:
-    result = self.reader.readtext(img)
+    try:
+      result = self.reader.readtext(img)
+    except Exception as e:
+      return ExtractionResult(plate="", confidence=0.0, error=f"Error detecting plate: {e}")
     
     if not result:
-      return {"text":"", "conf":0.0}
+      return ExtractionResult(plate="", confidence=0.0, error="Unexpected Error occurred")
     
-    # this model has trouble diferentiating 0 and O. Maybe finetune it aswell?
     (_, text, conf) = result[0]
 
     plate_normalized = self.normalize(text)
-      
+
     if plate_normalized:
       return ExtractionResult(plate=plate_normalized, confidence=conf.item(), error="")
       
