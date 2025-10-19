@@ -1,10 +1,9 @@
-import easyocr
 from dataclasses import dataclass
 import re
-from constants import PORTUGUESE_LICENSE_PLATE_REGEX
+from fast_plate_ocr import ONNXPlateRecognizer
 @dataclass
 class ExtractionResult:
-  plate: str | None
+  plate: list | None
   confidence: float
   error: str | None = None
   
@@ -14,7 +13,7 @@ class ExtractionResult:
 
 class Extractor:
   def __init__(self):
-    self.reader = easyocr.Reader(['en'])
+    self.model = ONNXPlateRecognizer("european-plates-mobile-vit-v2-model")
   
   def normalize(self, text:str) -> str:
     text = text.replace(" ", "")
@@ -22,18 +21,18 @@ class Extractor:
     return norm_text.upper()
 
   def inference(self, img) -> dict:
+    plate_normalized = []
     try:
-      result = self.reader.readtext(img)
+      results = self.model.run(img)
     except Exception as e:
       return ExtractionResult(plate="", confidence=0.0, error=f"Error detecting plate: {e}")
     
-    if not result:
+    if not results:
       return ExtractionResult(plate="", confidence=0.0, error="Unexpected Error occurred")
     
-    (_, text, conf) = result[0]
+    for result in results:
+      plate_normalized.append(self.normalize(result))
 
-    plate_normalized = self.normalize(text)
-
-    if plate_normalized:
-      return ExtractionResult(plate=plate_normalized, confidence=conf.item(), error="")
+    if len(plate_normalized) > 0:
+      return ExtractionResult(plate=plate_normalized, confidence=0.0, error="")
       
