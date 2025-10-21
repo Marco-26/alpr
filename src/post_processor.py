@@ -9,9 +9,10 @@ class PostProcessor:
     regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, raw_plate)
     if not regex_val:
       # If program reach here, try to apply substitution rules
-      print("Regex validated")
       pattern = self.__position_scoring(raw_plate)
+      print(f"Got pattern: {pattern}")
       plate_refactored = self.__apply_substitutions_rules(raw_plate,pattern)
+      print(f"Plate refactored: {plate_refactored}")
       return plate_refactored
     
     return raw_plate
@@ -37,6 +38,8 @@ class PostProcessor:
     
     for index, char in enumerate(guessed_plate):
       if (char.isdigit() and index in letter_pos) or (not char.isdigit() and index in number_pos):
-        guessed_plate = guessed_plate[:index] + CONFUSION_PAIRS[char] + guessed_plate[index + 1:]
+        replacement = CONFUSION_PAIRS.get(char)
+        if replacement:
+          guessed_plate = guessed_plate[:index] + CONFUSION_PAIRS[char] + guessed_plate[index + 1:]
     
     return guessed_plate

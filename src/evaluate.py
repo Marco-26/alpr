@@ -21,34 +21,33 @@ images_files = glob.glob(f'{images_dir}/*.jpg')
 
 base_ocr_images = sorted(glob.glob("/Users/mcosta/dev/alpr/ocr_eval_images/*.jpg"), key=lambda x: int(os.path.splitext(os.path.basename(x))[0])
 )
-labels = "ocr_eval_labels.csv"
+labels = "ocr_eval_labels2.csv"
 
-# MAKE FOUR TESTS:
-# 1. With no algorithm and no fine-tune
-# 2. With no algorithm and fine-tune
-# 3. With algorithm and no fine-tune
-# 4. with algorithm and fine-tune
-
+csv = pd.read_csv(labels)
 right_choices = []
+accuracy = 0
+test_length = min(len(csv), len(base_ocr_images))
 
 if __name__ == "__main__":
-  csv = pd.read_csv(labels)
   for index, image_path in enumerate(base_ocr_images):
-    if index == 30:
+    if index == test_length:
       break
     
     with Image.open(image_path) as img:
       img = img.resize((200,100))
       gray = img.convert("L")
-      gray.save(f"normalized_ocr_inputs/{index}.jpg")
     
       results = extractor.inference(np.array(gray))
       for plate in results.plate:
+        if plate != csv.label[index]:
+          print(f"Guessed plate: {plate}, should be: {csv.label[index]} at image: {index}")
+          plate = processor.validate(plate)
+        
         if plate == csv.label[index]:
           right_choices.append({
             "plate": plate,
             "index": index
           })
-        
-  print(f"Stats: {len(right_choices)}/30 correct guesses") 
-    
+          
+  accuracy = (len(right_choices)/test_length)*100
+  print(f"CORRECT: {len(right_choices)}/{test_length}, ACCURACY: {accuracy:.2f}%") 
