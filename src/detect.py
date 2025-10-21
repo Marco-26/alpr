@@ -2,28 +2,33 @@ from ultralytics import YOLO
 from PIL import Image
 import constants
 
-#TODO: Use case : Multiple cars on picture.
-#TODO: Train this model with bigger dataset and with images with multiple vehicles.
-
 class Detector:
   def __init__(self):
     self.model = YOLO(constants.YOLO_MODEL_PATH)
+    self.threshold = 0.7
   
   def finetune(self, variation, data, epochs, img_size, device):
     model = YOLO(variation)
     results = model.train(data=data, epochs=epochs, imgsz=img_size, device=device)
     print(results)
   
-  def inference(self, img: str) -> Image:
-    result = self.model(img)
-    xyxy = result[0].boxes.xyxy.numpy()
+  def inference(self, img: Image) -> Image:
+    # THIS WILL NOT WORK ON MULTIPLE CARS AS THE MODEL WAS ONLY TRAINED ON SINGLE CAR IMAGES
+    cropped_images = []
     
-    if len(xyxy) == 0:
-      print("Could not detect a licence plate")
-      return
+    results = self.model(img)
     
-    (a,b,c,d) = xyxy[0]
+    for result in results:
+      if result.boxes.conf >= self.threshold:
+        xyxy = result.boxes.xyxy.numpy()
+    
+        if len(xyxy) == 0:
+          print("Could not detect a licence plate")
+          return
+        
+        (a,b,c,d) = xyxy[0]
 
-    resized = img.crop((a,b,c,d))
-      
-    return resized
+        resized = img.crop((a,b,c,d))
+        cropped_images.append(resized)
+    
+    return cropped_images

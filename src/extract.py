@@ -3,7 +3,7 @@ import re
 from fast_plate_ocr import ONNXPlateRecognizer
 @dataclass
 class ExtractionResult:
-  plate: list | None
+  plates: list | None
   confidence: float
   error: str | None = None
   
@@ -21,18 +21,18 @@ class Extractor:
     return norm_text.upper()
 
   def inference(self, img) -> dict:
-    plate_normalized = []
+    normalized_plates = []
     try:
       results = self.model.run(img)
     except Exception as e:
-      return ExtractionResult(plate="", confidence=0.0, error=f"Error detecting plate: {e}")
+      return ExtractionResult(plates=[], confidence=0.0, error=f"Error detecting plate: {e}")
     
     if not results:
-      return ExtractionResult(plate="", confidence=0.0, error="Unexpected Error occurred")
+      return ExtractionResult(plates=[], confidence=0.0, error="Unexpected Error occurred")
     
     for result in results:
-      plate_normalized.append(self.normalize(result))
+      normalized_plates.append(self.normalize(result))
 
-    if len(plate_normalized) > 0:
-      return ExtractionResult(plate=plate_normalized, confidence=0.0, error="")
+    if len(normalized_plates) > 0:
+      return ExtractionResult(plates=normalized_plates, confidence=0.0, error="")
       
