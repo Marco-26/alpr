@@ -6,47 +6,63 @@ import glob
 import pandas as pd
 import numpy as np
 import os
+import logging
+import constants
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 extractor = Extractor()
 detector = Detector()
 processor = PostProcessor()
 
 # Evaluate the performance of model flow (extractor & detector) to performance of the processor.
-# Test with 100 images to calculate the accuracy of detector and accuracy of the processor.
 # To evaluate the extractor also measure the confidence so we can see how the confidence correlates with accuracy.
 
-images_dir = "/Users/mcosta/dev/alpr/outputs/data/train/images"
-images_files = glob.glob(f'{images_dir}/*.jpg')
+validation_images_files = sorted(glob.glob(f'{constants.VALIDATION_IMAGES_PATH}/*.jpg'), key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
+labels = "ocr_eval_labels.csv"
+# csv = pd.read_csv(labels)
 
-base_ocr_images = sorted(glob.glob("/Users/mcosta/dev/alpr/ocr_eval_images/*.jpg"), key=lambda x: int(os.path.splitext(os.path.basename(x))[0])
-)
-labels = "ocr_eval_labels2.csv"
-
-csv = pd.read_csv(labels)
+#metrics 
 right_choices = []
 accuracy = 0
-test_length = min(len(csv), len(base_ocr_images))
+length = len(validation_images_files)
+# also save any missed plates
+
+
+# if __name__ == "__main__":
+#   with Image.open(specific_plate) as img:
+#     detected_plates_result = detector.inference(img)
+#     for detected_plate in detected_plates_result:
+#       img = detected_plate.resize((200,100))
+#       gray = img.convert("L")
+    
+#       result = extractor.inference(np.array(gray))
+#       for plate in result.plates:
+#         print(plate)
 
 if __name__ == "__main__":
-  for index, image_path in enumerate(base_ocr_images):
-    if index == test_length:
-      break
-    
-    with Image.open(image_path) as img:
-      img = img.resize((200,100))
-      gray = img.convert("L")
-    
-      result = extractor.inference(np.array(gray))
-      for plate in result.plates:
-        if plate != csv.label[index]:
-          print(f"Guessed plate: {plate}, should be: {csv.label[index]} at image: {index}")
-          plate = processor.validate(plate)
+  with open(labels, 'w') as labels:
+    for index, image_path in enumerate(validation_images_files):
+      print("Start: ", image_path)
+      with Image.open(image_path) as img:
+        detected_plates_result = detector.inference(img)
+        for detected_plate in detected_plates_result:
+          img = detected_plate.resize((200,100))
+          gray = img.convert("L")
         
-        if plate == csv.label[index]:
-          right_choices.append({
-            "plate": plate,
-            "index": index
-          })
-          
-  accuracy = (len(right_choices)/test_length)*100
-  print(f"CORRECT: {len(right_choices)}/{test_length}, ACCURACY: {accuracy:.2f}%") 
+          result = extractor.inference(np.array(gray))
+          for plate in result.plates:
+            print(plate)
+            # labels.write(f"{index},{plate}\n")
+            # if plate != csv.label[index]:
+            #   print(f"Guessed plate: {plate}, should be: {csv.label[index]} at image: {index}")
+            #   plate = processor.validate(plate)
+            
+            # if plate == csv.label[index]:
+            #   right_choices.append({
+            #     "plate": plate,
+            #     "index": index
+            #   })
+            
+  accuracy = (len(right_choices)/length)*100
+  print(f"CORRECT: {len(right_choices)}/{length}, ACCURACY: {accuracy:.2f}%") 

@@ -19,7 +19,7 @@ class Detector:
     results = self.model(img)
     
     for result in results:
-      if result.boxes.conf >= self.threshold:
+      if len(result.boxes.conf) > 0 and max(result.boxes.conf) >= self.threshold:
         xyxy = result.boxes.xyxy.numpy()
     
         if len(xyxy) == 0:
