@@ -2,6 +2,8 @@ PORTUGUESE_LICENSE_PLATE_REGEX="(?:[A-Z]{2}[0-9]{2}[A-Z]{2}|[0-9]{2}[A-Z]{2}[0-9
 
 YOLO_MODEL_PATH = "./outputs/runs/detect/train/weights/best.pt"
 VALIDATION_IMAGES_PATH="./validation_images"
+VALIDATION_IMAGES_LABELS_PATH="./validation_images/validation_images_labels.csv"
+
 
 CONFUSION_PAIRS = {
   'I':'1',
