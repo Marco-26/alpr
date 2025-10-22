@@ -1,6 +1,9 @@
 from ultralytics import YOLO
 from PIL import Image
 import constants
+import logging
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 class Detector:
   def __init__(self):
@@ -10,25 +13,24 @@ class Detector:
   def finetune(self, variation, data, epochs, img_size, device):
     model = YOLO(variation)
     results = model.train(data=data, epochs=epochs, imgsz=img_size, device=device)
-    print(results)
   
-  def inference(self, img: Image) -> Image:
+  def inference(self, img: Image) -> list:
     # THIS WILL NOT WORK ON MULTIPLE CARS AS THE MODEL WAS ONLY TRAINED ON SINGLE CAR IMAGES
-    cropped_images = []
+    plate_crops = []
     
-    results = self.model(img)
+    detections = self.model(img)
     
-    for result in results:
-      if len(result.boxes.conf) > 0 and max(result.boxes.conf) >= self.threshold:
-        xyxy = result.boxes.xyxy.numpy()
+    for detection in detections:
+      if len(detection.boxes.conf) > 0 and max(detection.boxes.conf) >= self.threshold:
+        xyxy = detection.boxes.xyxy.numpy()
     
         if len(xyxy) == 0:
-          print("Could not detect a licence plate")
-          return
+          logging.error("Could not detect a licence plate")
+          return []
         
         (a,b,c,d) = xyxy[0]
 
         resized = img.crop((a,b,c,d))
-        cropped_images.append(resized)
+        plate_crops.append(resized)
     
-    return cropped_images
+    return plate_crops

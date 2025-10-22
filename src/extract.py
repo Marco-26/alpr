@@ -4,12 +4,7 @@ from fast_plate_ocr import ONNXPlateRecognizer
 @dataclass
 class ExtractionResult:
   plates: list | None
-  confidence: float
   error: str | None = None
-  
-  @property
-  def succeeded(self) -> bool:
-    return self.error is None and self.plate is not None
 
 class Extractor:
   def __init__(self):
@@ -23,16 +18,15 @@ class Extractor:
   def inference(self, img) -> dict:
     normalized_plates = []
     try:
-      results = self.model.run(img)
+      detections = self.model.run(img)
     except Exception as e:
-      return ExtractionResult(plates=[], confidence=0.0, error=f"Error detecting plate: {e}")
+      return ExtractionResult(plates=[], error=f"Error detecting plate: {e}")
     
-    if not results:
-      return ExtractionResult(plates=[], confidence=0.0, error="Unexpected Error occurred")
+    if not detections:
+      return ExtractionResult(plates=[], error="Unexpected Error occurred")
     
-    for result in results:
-      normalized_plates.append(self.normalize(result))
+    for detection in detections:
+      normalized_plates.append(self.normalize(detection))
 
-    if len(normalized_plates) > 0:
-      return ExtractionResult(plates=normalized_plates, confidence=0.0, error="")
+    return ExtractionResult(plates=normalized_plates)
       

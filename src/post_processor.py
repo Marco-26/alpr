@@ -1,5 +1,5 @@
-import re
 from constants import PORTUGUESE_LICENSE_PLATE_REGEX, PATTERNS, CONFUSION_PAIRS
+import re
 
 class PostProcessor:
   def __init__(self):
@@ -8,11 +8,8 @@ class PostProcessor:
   def validate(self, raw_plate:str):
     regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, raw_plate)
     if not regex_val:
-      # If program reach here, try to apply substitution rules
       pattern = self.__position_scoring(raw_plate)
-      print(f"Got pattern: {pattern}")
       plate_refactored = self.__apply_substitutions_rules(raw_plate,pattern)
-      print(f"Plate refactored: {plate_refactored}")
       return plate_refactored
     
     return raw_plate
