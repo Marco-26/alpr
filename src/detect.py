@@ -1,18 +1,19 @@
 from ultralytics import YOLO
+from ultralytics.utils import LOGGER
 from PIL import Image
 import constants
 import logging
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
+LOGGER.setLevel(logging.WARNING)
 class Detector:
   def __init__(self):
-    self.model = YOLO(constants.YOLO_MODEL_PATH)
+    self.model = YOLO(constants.YOLO_MODEL_PATH, verbose=False)
     self.threshold = 0.7
   
   def finetune(self, variation, data, epochs, img_size, device):
     model = YOLO(variation)
-    results = model.train(data=data, epochs=epochs, imgsz=img_size, device=device)
+    model.train(data=data, epochs=epochs, imgsz=img_size, device=device)
   
   def inference(self, img: Image) -> list:
     # THIS WILL NOT WORK ON MULTIPLE CARS AS THE MODEL WAS ONLY TRAINED ON SINGLE CAR IMAGES

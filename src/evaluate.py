@@ -1,6 +1,7 @@
 from post_processor import PostProcessor
 from extract import Extractor
 from detect import Detector
+from tqdm import tqdm
 from PIL import Image
 import glob
 import pandas as pd
@@ -26,7 +27,6 @@ length = len(validation_images_files)
 def evaluate() -> dict:
   # METRICS
   #Detection (yolo) metrics
-  detector_images_fp = 0
   detector_images_gt = 0
   detector_missed_images = 0
   detector_missed_images_labels = []
@@ -39,7 +39,7 @@ def evaluate() -> dict:
   
   #Post processor metrics
   
-  for index, image_path in enumerate(validation_images_files):
+  for index, image_path in enumerate(tqdm(validation_images_files, desc="Evaluating")):
     with Image.open(image_path) as img:
       detected_plates_result = detector.inference(img)
       
@@ -47,6 +47,8 @@ def evaluate() -> dict:
         detector_missed_images += 1
         detector_missed_images_labels.append(image_path)
         continue
+      
+      detector_images_gt += 1
       
       for detected_plate in detected_plates_result:
         img = detected_plate.resize((200,100))
@@ -59,11 +61,8 @@ def evaluate() -> dict:
           
           if plate == csv.label[index]:
             extractor_gt +=1
-            detector_images_gt += 1
             continue
           
-          detector_images_fp +=1
-        
   extractor_accuracy = (extractor_gt/length)*100 if length else 0.0
   detector_accuracy = (detector_images_gt/length)*100 if length else 0.0
 
@@ -71,7 +70,6 @@ def evaluate() -> dict:
     "images": length,
     "detector": {
       "ground_truth": detector_images_gt,
-      "false_positives": detector_images_fp,
       "missed": detector_missed_images,
       "missed_labels": detector_missed_images_labels,
       "accuracy": detector_accuracy,
@@ -80,6 +78,7 @@ def evaluate() -> dict:
       "ground_truth": extractor_gt,
       "accuracy": extractor_accuracy,
     },
+    "overall_accuracy": (detector_accuracy+extractor_accuracy)/2
   }
 
   return metrics
@@ -91,17 +90,17 @@ if __name__ == "__main__":
       "METRICS SUMMARY\n"
       "- Total images evaluated: %d\n"
       "- Detector: correct detections (match ground truth): %d\n"
-      "- Detector: false-positive detections: %d\n"
       "- Detector: missed images (no plate detected): %d\n"
       "- Detector: accuracy (%%): %.2f\n"
       "- Extractor: correct recognitions: %d\n"
-      "- Extractor: accuracy (%%): %.2f"
+      "- Extractor: accuracy (%%): %.2f\n"
+      "- Overall accuracy (%%): %.2f" 
     ),
     metrics["images"],
     metrics["detector"]["ground_truth"],
-    metrics["detector"]["false_positives"],
     metrics["detector"]["missed"],
     metrics["detector"]["accuracy"],
     metrics["extractor"]["ground_truth"],
     metrics["extractor"]["accuracy"],
+    metrics["overall_accuracy"],
   )
