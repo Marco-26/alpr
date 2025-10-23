@@ -34,16 +34,14 @@ def evaluate() -> dict:
 
   #Extractor (ocr) metrics
   extractor_gt = 0
-  extractor_letter_accuracy = 0
   extractor_accuracy = 0
-  
-  #Post processor metrics
+  extractor_post_processor_help = 0 # how many plates post processor helped get right
   
   for index, image_path in enumerate(tqdm(validation_images_files, desc="Evaluating")):
     with Image.open(image_path) as img:
       detected_plates_result = detector.inference(img)
       
-      if not detected_plates_result or len(detected_plates_result)==0:
+      if not detected_plates_result or len(detected_plates_result) == 0:
         detector_missed_images += 1
         detector_missed_images_labels.append(image_path)
         continue
@@ -51,16 +49,18 @@ def evaluate() -> dict:
       detector_images_gt += 1
       
       for detected_plate in detected_plates_result:
-        img = detected_plate.resize((200,100))
+        img = detected_plate.resize((500,100))
         gray = img.convert("L")
       
         result = extractor.inference(np.array(gray))
         for plate in result.plates:
           if plate != str(csv.label[index].strip()):
-            plate = processor.validate(plate)
+            refactored_plate = processor.validate(plate)
+            if refactored_plate == csv.label[index]:
+              extractor_post_processor_help += 1
           
-          if plate == csv.label[index]:
-            extractor_gt +=1
+          if plate == csv.label[index] or refactored_plate == csv.label[index]:
+            extractor_gt += 1
             continue
           
   extractor_accuracy = (extractor_gt/length)*100 if length else 0.0
@@ -69,16 +69,17 @@ def evaluate() -> dict:
   metrics = {
     "images": length,
     "detector": {
-      "ground_truth": detector_images_gt,
+      "correct_detections": detector_images_gt,
       "missed": detector_missed_images,
       "missed_labels": detector_missed_images_labels,
-      "accuracy": detector_accuracy,
+      "recall": detector_accuracy,
     },
     "extractor": {
-      "ground_truth": extractor_gt,
+      "exact_matches": extractor_gt,
       "accuracy": extractor_accuracy,
+      "fixed_by_post_processor": extractor_post_processor_help
     },
-    "overall_accuracy": (detector_accuracy+extractor_accuracy)/2
+    "end_to_end_accuracy": (extractor_accuracy+detector_accuracy)/2
   }
 
   return metrics
@@ -89,18 +90,20 @@ if __name__ == "__main__":
     (
       "METRICS SUMMARY\n"
       "- Total images evaluated: %d\n"
-      "- Detector: correct detections (match ground truth): %d\n"
+      "- Detector: images with at least one detection: %d\n"
       "- Detector: missed images (no plate detected): %d\n"
-      "- Detector: accuracy (%%): %.2f\n"
-      "- Extractor: correct recognitions: %d\n"
-      "- Extractor: accuracy (%%): %.2f\n"
-      "- Overall accuracy (%%): %.2f" 
+      "- Detector: recall: %.2f%%\n"
+      "- Extractor: exact matches: %d\n"
+      "- Extractor: accuracy: %.2f%%\n"
+      "- Extractor: fixed by post processor: %d\n"
+      "- End-to-end accuracy: %.2f%%\n"
     ),
     metrics["images"],
-    metrics["detector"]["ground_truth"],
+    metrics["detector"]["correct_detections"],
     metrics["detector"]["missed"],
-    metrics["detector"]["accuracy"],
-    metrics["extractor"]["ground_truth"],
+    metrics["detector"]["recall"],
+    metrics["extractor"]["exact_matches"],
     metrics["extractor"]["accuracy"],
-    metrics["overall_accuracy"],
+    metrics["extractor"]["fixed_by_post_processor"],
+    metrics["end_to_end_accuracy"],
   )
