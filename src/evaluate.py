@@ -21,16 +21,33 @@ processor = PostProcessor()
 validation_images_files = sorted(glob.glob(f'{constants.VALIDATION_IMAGES_PATH}/*.jpg'), key=lambda x: int(os.path.splitext(os.path.basename(x))[0]))
 csv = pd.read_csv(constants.VALIDATION_IMAGES_LABELS_PATH)
 
-# METRICS
-right_choices = []
-accuracy = 0
 length = len(validation_images_files)
-# also save any missed plates
 
-def evaluate():
+def evaluate() -> dict:
+  # METRICS
+  #Detection (yolo) metrics
+  detector_images_fp = 0
+  detector_images_gt = 0
+  detector_missed_images = 0
+  detector_missed_images_labels = []
+  detector_accuracy = 0
+
+  #Extractor (ocr) metrics
+  extractor_gt = 0
+  extractor_letter_accuracy = 0
+  extractor_accuracy = 0
+  
+  #Post processor metrics
+  
   for index, image_path in enumerate(validation_images_files):
     with Image.open(image_path) as img:
       detected_plates_result = detector.inference(img)
+      
+      if not detected_plates_result or len(detected_plates_result)==0:
+        detector_missed_images += 1
+        detector_missed_images_labels.append(image_path)
+        continue
+      
       for detected_plate in detected_plates_result:
         img = detected_plate.resize((200,100))
         gray = img.convert("L")
@@ -41,13 +58,50 @@ def evaluate():
             plate = processor.validate(plate)
           
           if plate == csv.label[index]:
-            right_choices.append({
-              "plate": plate,
-              "index": index
-            })
+            extractor_gt +=1
+            detector_images_gt += 1
+            continue
           
-  accuracy = (len(right_choices)/length)*100
-  logging.info(f"CORRECT: {len(right_choices)}/{length}, ACCURACY: {accuracy:.2f}%") 
+          detector_images_fp +=1
+        
+  extractor_accuracy = (extractor_gt/length)*100 if length else 0.0
+  detector_accuracy = (detector_images_gt/length)*100 if length else 0.0
+
+  metrics = {
+    "images": length,
+    "detector": {
+      "ground_truth": detector_images_gt,
+      "false_positives": detector_images_fp,
+      "missed": detector_missed_images,
+      "missed_labels": detector_missed_images_labels,
+      "accuracy": detector_accuracy,
+    },
+    "extractor": {
+      "ground_truth": extractor_gt,
+      "accuracy": extractor_accuracy,
+    },
+  }
+
+  return metrics
 
 if __name__ == "__main__":
-  evaluate()
+  metrics = evaluate()
+  logging.info(
+    (
+      "METRICS SUMMARY\n"
+      "- Total images evaluated: %d\n"
+      "- Detector: correct detections (match ground truth): %d\n"
+      "- Detector: false-positive detections: %d\n"
+      "- Detector: missed images (no plate detected): %d\n"
+      "- Detector: accuracy (%%): %.2f\n"
+      "- Extractor: correct recognitions: %d\n"
+      "- Extractor: accuracy (%%): %.2f"
+    ),
+    metrics["images"],
+    metrics["detector"]["ground_truth"],
+    metrics["detector"]["false_positives"],
+    metrics["detector"]["missed"],
+    metrics["detector"]["accuracy"],
+    metrics["extractor"]["ground_truth"],
+    metrics["extractor"]["accuracy"],
+  )
