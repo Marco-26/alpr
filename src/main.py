@@ -1,3 +1,5 @@
+"""CLI: detect plates in an image and OCR them."""
+
 import logging
 import numpy as np
 from PIL import Image

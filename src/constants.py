@@ -1,3 +1,5 @@
+"""Constants for detection, evaluation, and OCR post-processing."""
+
 PORTUGUESE_LICENSE_PLATE_REGEX="(?:[A-Z]{2}[0-9]{2}[A-Z]{2}|[0-9]{2}[A-Z]{2}[0-9]{2})"
 
 YOLO_MODEL_PATH = "./outputs/runs/detect/train/weights/best.pt"

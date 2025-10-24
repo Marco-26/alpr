@@ -1,3 +1,5 @@
+"""Evaluate detector + OCR + post-processor on validation data."""
+
 from post_processor import PostProcessor
 from extract import Extractor
 from detect import Detector
@@ -25,6 +27,7 @@ csv = pd.read_csv(constants.VALIDATION_IMAGES_LABELS_PATH)
 length = len(validation_images_files)
 
 def evaluate() -> dict:
+  """Run evaluation and return a metrics dictionary."""
   # METRICS
   #Detection (yolo) metrics
   detector_images_gt = 0

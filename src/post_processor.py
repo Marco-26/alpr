@@ -1,35 +1,41 @@
+"""Validate and correct OCR plate candidates (Portuguese formats)."""
+
 from constants import PORTUGUESE_LICENSE_PLATE_REGEX, PATTERNS, CONFUSION_PAIRS
 import re
 
+
 class PostProcessor:
+  """Validate and refine OCR plate candidates."""
+
   def __init__(self):
+    """Initialize with predefined patterns and rules."""
     pass
   
-  def validate(self, raw_plate:str):
+  def validate(self, raw_plate: str) -> str:
+    """Return plate if valid, else corrected via pattern/rules."""
     regex_val = re.search(PORTUGUESE_LICENSE_PLATE_REGEX, raw_plate)
     if not regex_val:
       pattern = self.__position_scoring(raw_plate)
-      plate_refactored = self.__apply_substitutions_rules(raw_plate,pattern)
+      plate_refactored = self.__apply_substitutions_rules(raw_plate, pattern)
       return plate_refactored
     
     return raw_plate
       
-  def __position_scoring(self, normalized_plate) -> str:
-    """
-      normalized plates dont have dashes
-    """
+  def __position_scoring(self, normalized_plate: str) -> str:
+    """Choose best format by positional letter/number scoring."""
     scores = []
     for name, pattern in PATTERNS.items():
       current_score = 0
       for index, letter in enumerate(normalized_plate):
         if (letter.isdigit() and index in pattern["number_pos"]) or (not letter.isdigit() and index in pattern["letter_pos"]):
-          current_score +=1
+          current_score += 1
       scores.append((name, current_score))
     best = max(scores, key=lambda x: x[1])
     pattern, _ = best
     return pattern  
 
-  def __apply_substitutions_rules(self, guessed_plate, pattern) -> str:
+  def __apply_substitutions_rules(self, guessed_plate: str, pattern: str) -> str:
+    """Substitute chars (e.g., O-0, I-1) based on expected type per position."""
     letter_pos = PATTERNS[pattern]["letter_pos"]
     number_pos = PATTERNS[pattern]["number_pos"]
     
