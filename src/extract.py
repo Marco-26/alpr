@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 import re
 from typing import List, Optional
-from fast_plate_ocr import ONNXPlateRecognizer
+from fast_plate_ocr import LicensePlateRecognizer
 @dataclass
 class ExtractionResult:
   """OCR result: candidate `plates` and optional `error`."""
@@ -13,8 +13,8 @@ class ExtractionResult:
 
 class Extractor:
   def __init__(self):
-    """Load the ONNX plate recognizer."""
-    self.model = ONNXPlateRecognizer("european-plates-mobile-vit-v2-model")
+    """Load the licence plate recognizer."""
+    self.model = LicensePlateRecognizer("european-plates-mobile-vit-v2-model")
   
   def normalize(self, text:str) -> str:
     """Return uppercase alphanumeric string (no spaces/dashes)."""
