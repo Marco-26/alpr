@@ -23,6 +23,8 @@ if __name__ == "__main__":
   
   with Image.open(image_file_path) as img:
     results = detector.inference(img)
+    if not results:
+      logging.error(f"No license plates were detected in the image: {image_file_path}")
     for result in results:
       img = result.resize((200,100))
       gray = result.convert("L")
