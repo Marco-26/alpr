@@ -9,11 +9,6 @@ A small, learning‑oriented ALPR system that detects a license plate in an imag
 - Normalizes and post‑processes candidates to correct common confusions (O/0, I/1, S/5) and enforce Portuguese formats.
 - Provides a simple CLI for single‑image inference and a script to evaluate on a small validation set.
 
-**Why it’s useful**
-
-- Clear, minimal code you can read and tweak.
-- End‑to‑end example: detection → OCR → post‑processing → metrics.
-
 **Project Structure**
 
 - `src/main.py`: CLI for detecting and OCR’ing a single image.
