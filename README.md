@@ -1,60 +1,74 @@
-# Vehicle License Plate Recognition and Information Retrieval
+# ALPR — Simple Automatic License Plate Recognition
 
-A project to detect and extract vehicle license plate information from images or real-time camera feeds, providing details such as the vehicle's brand, model, and specifications using an API. This project showcases computer vision and AI skills, including object detection, OCR.
+A small, learning‑oriented ALPR system that detects a license plate in an image, reads its text with OCR, and applies light post‑processing tailored to Portuguese plate formats. It was built for fun to understand the end‑to‑end pipeline.
 
-# Overview
+**What it does**
 
-Goal: Develop a system to detect license plates in images or live camera feeds, extract the plate text using OCR, and retrieve vehicle details (e.g., brand, model, engine specs) via an API, with real-time inference capabilities on mobile devices.
-Use Case: Enable users to point a phone camera at a vehicle's license plate and instantly view its specifications.
+- Detects plates with an Ultralytics YOLO model (weights included).
+- Runs OCR using `fast_plate_ocr` (European plate model).
+- Normalizes and post‑processes candidates to correct common confusions (O/0, I/1, S/5) and enforce Portuguese formats.
+- Provides a simple CLI for single‑image inference and a script to evaluate on a small validation set.
 
-Tools:
-Python: Core programming language.
-YOLOv11: For license plate detection.
-EasyOCR: For text extraction from cropped plates.
-API: External API for retrieving vehicle details (e.g., brand, model, motor).
+**Why it’s useful**
 
+- Clear, minimal code you can read and tweak.
+- End‑to‑end example: detection → OCR → post‑processing → metrics.
 
-# Features
+**Project Structure**
 
-License Plate Detection: Accurately localizes license plates in images using YOLOv11.
-Text Extraction: Extracts text from detected plates with EasyOCR, optimized for license plate fonts.
-Vehicle Information Retrieval: Queries an external API to fetch vehicle details based on the extracted plate number.
+- `src/main.py`: CLI for detecting and OCR’ing a single image.
+- `src/detect.py`: YOLO detector and optional fine‑tuning helper.
+- `src/extract.py`: OCR wrapper and normalization using `fast_plate_ocr`.
+- `src/post_processor.py`: Portuguese‑specific validation and character substitutions.
+- `src/constants.py`: Config paths and patterns (YOLO weights, dataset, regex).
+- `validation_images/`: Sample images + `validation_images_labels.csv` for evaluation.
+- `outputs/runs/detect/train/weights/best.pt`: Included trained weights.
 
-Real-Time Inference (Future Work): Optimized for mobile devices to enable live camera-based recognition.
+**Prerequisites**
 
-# Roadmap
-1. Dataset Collection & Preparation
+- Python 3.10+
+- macOS/Linux/Windows with a working Python toolchain
+- Optional GPU for faster YOLO inference (CPU works fine)
 
-Source images from open datasets.
-Annotate license plates with bounding boxes or use pre-annotated datasets.
-Apply data augmentation (brightness, blur, rotation, angle distortion) to improve robustness.
+**Setup**
 
-2. License Plate Detection
+- Create a virtual environment (recommended) and install deps:
+  - `python -m venv .venv && source .venv/bin/activate` (Windows: `.\.venv\\Scripts\\activate`)
+  - `pip install -r requirements.txt`
 
-Use YOLOv11 for real-time license plate localization.
-Fine-tune on annotated datasets to improve detection accuracy.
-Output cropped plate regions for OCR processing.
+Note: First YOLO run may download additional assets. If you run into issues with the quoted extras in `requirements.txt`, install OCR directly: `pip install fast-plate-ocr[onnx]`.
 
-3. OCR Recognition
+**Run Inference (Single Image)**
 
-Feed cropped plates into EasyOCR for text extraction.
-Fine-tune OCR model on license plate-specific fonts and formats.
-Output raw text string of the license plate.
+- `python src/main.py path/to/image.jpg`
 
-4. Evaluation & Deployment
+The script logs candidate plate texts after detection and OCR.
 
-Metrics:
-Detection Accuracy (IoU).
-OCR Accuracy.
-End-to-End ALPR Accuracy.
+**Evaluate on Validation Set**
 
+- Place images and labels under `validation_images/` (already included as an example).
+- Run: `python src/evaluate.py`
+- Outputs a metrics summary (detector recall, OCR accuracy, post‑processor fixes, end‑to‑end accuracy).
 
-# Contributing
-Contributions are welcome! Please submit pull requests or open issues for bugs, feature requests, or improvements.
-License
-This project is licensed under the MIT License. See the LICENSE file for details.
+**Fine‑Tuning (Optional)**
 
-# Acknowledgments
+- Trained weights live at `outputs/runs/detect/train/weights/best.pt` and are referenced by default.
+- To fine‑tune a YOLO variant via code, see `Detector.finetune(...)` in `src/detect.py`.
+- Alternatively, use the Ultralytics CLI directly (`yolo detect train ...`).
 
-YOLOv11: Ultralytics for the object detection framework.
-EasyOCR: For robust OCR capabilities.
+**Configuration**
+
+- Change YOLO weights path: `src/constants.py:5`
+- Adjust detection threshold: `src/detect.py:17`
+- Modify Portuguese plate patterns/confusions: `src/constants.py:10`
+
+**Limitations**
+
+- Post‑processing currently targets Portuguese formats and may not fit other countries.
+- OCR model is European‑centric; other regions may need a different model.
+- This is a simple, single‑image CLI — no streaming/video UI.
+
+**Acknowledgments**
+
+- Ultralytics YOLO for detection.
+- `fast_plate_ocr` for the OCR model and runtime.
