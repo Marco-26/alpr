@@ -1,74 +1,51 @@
 # ALPR — Simple Automatic License Plate Recognition
 
-A small, learning‑oriented ALPR system that detects a license plate in an image, reads its text with OCR, and applies light post‑processing tailored to Portuguese plate formats. It was built for fun to understand the end‑to‑end pipeline.
+This repository contains a small, learning‑oriented ALPR system that detects a license plate in an image, reads its text with OCR, and then cleans the result using lightweight post‑processing rules tuned for Portuguese formats. I built it for fun to understand how the detection and OCR pieces fit together into an end‑to‑end pipeline.
 
-**What it does**
+The flow is simple. An Ultralytics YOLO model first localizes the plate in the input image and crops the detected region. Those crops are passed to an OCR component backed by `fast_plate_ocr` using its European plates model, which returns one or more candidate strings. The candidates are normalized to uppercase alphanumeric text and then refined by a small post‑processor that corrects common confusions such as O↔0, I↔1, and S↔5 while preferring strings that match Portuguese plate patterns. Together, this gives a compact example of detection → OCR → post‑processing, and the repository includes an evaluation script that reports basic metrics over a small validation set.
 
-- Detects plates with an Ultralytics YOLO model (weights included).
-- Runs OCR using `fast_plate_ocr` (European plate model).
-- Normalizes and post‑processes candidates to correct common confusions (O/0, I/1, S/5) and enforce Portuguese formats.
-- Provides a simple CLI for single‑image inference and a script to evaluate on a small validation set.
+The code is intentionally compact and easy to read. The CLI entry point in `src/main.py` runs single‑image inference. The detector in `src/detect.py` wraps the YOLO model (with a configurable confidence threshold at `src/detect.py:17`) and includes a convenience method to fine‑tune a YOLO variation if you want to experiment. The OCR wrapper and normalization live in `src/extract.py`, which uses the model named in code ("european-plates-mobile-vit-v2-model" at `src/extract.py:17`). The Portuguese‑specific validator and position‑aware substitutions are in `src/post_processor.py`. Configuration such as the weights path, dataset locations, patterns, and confusion pairs is centralized in `src/constants.py`; by default the detector reads weights from `outputs/runs/detect/train/weights/best.pt` as referenced at `src/constants.py:5`. Sample images and labels are provided under `validation_images/` to make experiments easy.
 
-**Why it’s useful**
+To get started, install Python 3.10 or newer and set up a virtual environment. On Unix‑like systems, create and activate a venv with:
 
-- Clear, minimal code you can read and tweak.
-- End‑to‑end example: detection → OCR → post‑processing → metrics.
+```
+python -m venv .venv
+source .venv/bin/activate
+```
 
-**Project Structure**
+On Windows, activate with:
 
-- `src/main.py`: CLI for detecting and OCR’ing a single image.
-- `src/detect.py`: YOLO detector and optional fine‑tuning helper.
-- `src/extract.py`: OCR wrapper and normalization using `fast_plate_ocr`.
-- `src/post_processor.py`: Portuguese‑specific validation and character substitutions.
-- `src/constants.py`: Config paths and patterns (YOLO weights, dataset, regex).
-- `validation_images/`: Sample images + `validation_images_labels.csv` for evaluation.
-- `outputs/runs/detect/train/weights/best.pt`: Included trained weights.
+```
+.\.venv\Scripts\activate
+```
 
-**Prerequisites**
+With the environment active, install dependencies using:
 
-- Python 3.10+
-- macOS/Linux/Windows with a working Python toolchain
-- Optional GPU for faster YOLO inference (CPU works fine)
+```
+pip install -r requirements.txt
+```
 
-**Setup**
+The first YOLO run may download additional assets. If your environment struggles with the extras syntax for the OCR dependency in `requirements.txt`, you can install it directly with:
 
-- Create a virtual environment (recommended) and install deps:
-  - `python -m venv .venv && source .venv/bin/activate` (Windows: `.\.venv\\Scripts\\activate`)
-  - `pip install -r requirements.txt`
+```
+pip install fast-plate-ocr[onnx]
+```
 
-Note: First YOLO run may download additional assets. If you run into issues with the quoted extras in `requirements.txt`, install OCR directly: `pip install fast-plate-ocr[onnx]`.
+After installation, you can run single‑image inference by executing:
 
-**Run Inference (Single Image)**
+```
+python src/main.py path/to/image.jpg
+```
 
-- `python src/main.py path/to/image.jpg`
+This will open the image, detect and crop the plate, run OCR, apply post‑processing, and log the candidate plate texts it finds. To evaluate the full pipeline on the included validation set, run:
 
-The script logs candidate plate texts after detection and OCR.
+```
+python src/evaluate.py
+```
 
-**Evaluate on Validation Set**
+The evaluation prints a short summary that includes detector recall, OCR accuracy, how often the post‑processor corrected the OCR to a match, and an overall end‑to‑end score. If you want to fine‑tune a detector, the project points to the included weights at `outputs/runs/detect/train/weights/best.pt` and exposes a minimal training helper via `Detector.finetune(...)` in `src/detect.py`; alternatively, you can use the Ultralytics CLI (`yolo detect train ...`) with your own data configuration.
 
-- Place images and labels under `validation_images/` (already included as an example).
-- Run: `python src/evaluate.py`
-- Outputs a metrics summary (detector recall, OCR accuracy, post‑processor fixes, end‑to‑end accuracy).
+Configuration is centralized so tweaks are easy: change the YOLO weights path in `src/constants.py`, adjust the detection threshold in `src/detect.py`, and extend or modify the Portuguese plate patterns and confusion pairs in `src/constants.py` if your data differs. The current approach has some limitations worth noting. The post‑processing logic is tuned for Portuguese formats and may not generalize to other countries without changes. The OCR model is European‑centric, so plates from other regions may require a different model. The interface targets single images from the command line rather than video streams or a real‑time UI.
 
-**Fine‑Tuning (Optional)**
+This project relies on Ultralytics YOLO for detection and on `fast_plate_ocr` for OCR. No license file is currently included; if you plan to reuse or distribute the code, consider adding one (for example, MIT or Apache‑2.0) that matches your needs.
 
-- Trained weights live at `outputs/runs/detect/train/weights/best.pt` and are referenced by default.
-- To fine‑tune a YOLO variant via code, see `Detector.finetune(...)` in `src/detect.py`.
-- Alternatively, use the Ultralytics CLI directly (`yolo detect train ...`).
-
-**Configuration**
-
-- Change YOLO weights path: `src/constants.py:5`
-- Adjust detection threshold: `src/detect.py:17`
-- Modify Portuguese plate patterns/confusions: `src/constants.py:10`
-
-**Limitations**
-
-- Post‑processing currently targets Portuguese formats and may not fit other countries.
-- OCR model is European‑centric; other regions may need a different model.
-- This is a simple, single‑image CLI — no streaming/video UI.
-
-**Acknowledgments**
-
-- Ultralytics YOLO for detection.
-- `fast_plate_ocr` for the OCR model and runtime.
