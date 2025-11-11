@@ -3,3 +3,4 @@ pillow
 ultralytics
 "fast-plate-ocr[onnx]"
 pandas
+gradio
