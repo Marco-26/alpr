@@ -1,48 +1,58 @@
 # ALPR — Simple Automatic License Plate Recognition
 
-This repository contains a small, learning‑oriented ALPR system that detects a license plate in an image, reads its text with OCR, and then cleans the result using lightweight post‑processing rules tuned for Portuguese formats. I built it for fun to understand how the detection and OCR pieces fit together into an end‑to‑end pipeline.
+A compact Automatic License Plate Recognition (ALPR) system that detects, reads, and cleans license plate text from images. Designed for clarity and experimentation, it demonstrates how detection, OCR, and post-processing connect into a full pipeline.
 
-The flow is simple. An Ultralytics YOLO model first localizes the plate in the input image and crops the detected region. Those crops are passed to an OCR component backed by `fast_plate_ocr` using its European plates model, which returns one or more candidate strings. The candidates are normalized to uppercase alphanumeric text and then refined by a small post‑processor that corrects common confusions such as O↔0, I↔1, and S↔5 while preferring strings that match Portuguese plate patterns. Together, this gives a compact example of detection → OCR → post‑processing, and the repository includes an evaluation script that reports basic metrics over a small validation set.
+## Overview
+The system processes an image in three stages:
+1. **Detection**: A YOLO model localizes the license plate.
+2. **OCR**: The cropped plate is read using fast_plate_ocr (European plates model).
+3. **Post-Processing**: The recognized text is normalized and corrected using simple, rule‑based substitutions tuned for Portuguese formats.
 
-The code is intentionally compact and easy to read. The CLI entry point in `src/main.py` runs single‑image inference. The detector in `src/detect.py` wraps the YOLO model (with a configurable confidence threshold at `src/detect.py:17`) and includes a convenience method to fine‑tune a YOLO variation if you want to experiment. The OCR wrapper and normalization live in `src/extract.py`, which uses the model named in code ("european-plates-mobile-vit-v2-model" at `src/extract.py:17`). The Portuguese‑specific validator and position‑aware substitutions are in `src/post_processor.py`. Configuration such as the weights path, dataset locations, patterns, and confusion pairs is centralized in `src/constants.py`; by default the detector reads weights from `outputs/runs/detect/train/weights/best.pt` as referenced at `src/constants.py:5`. Sample images and labels are provided under `validation_images/` to make experiments easy.
+## Setup
 
-To get started, install Python 3.10 or newer and set up a virtual environment. On Unix‑like systems, create and activate a venv with:
+Requirements
+- Python 3.8+
+- A virtual environment (recommended)
+- Key Python packages: gradio, pillow, numpy
+- Additional packages required by the detector/extractor (e.g. ultralytics, torch) — see `requirements.txt` for the project's full list.
 
-```
-python -m venv .venv
+1. Create and activate a virtual environment (macOS / zsh):
+
+```bash
+python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-On Windows, activate with:
+2. Install dependencies:
 
-```
-.\.venv\Scripts\activate
-```
+If you already have `requirements.txt`:
 
-With the environment active, install dependencies using:
-
-```
+```bash
 pip install -r requirements.txt
 ```
 
-The first YOLO run may download additional assets. If your environment struggles with the extras syntax for the OCR dependency in `requirements.txt`, you can install it directly with:
+Note: Some packages (like `torch`) have platform/GPU-specific wheels — follow their official install instructions if you need CUDA support.
 
-```
-pip install fast-plate-ocr[onnx]
-```
+## Run the demo
 
-After installation, you can run single‑image inference by executing:
+From the repository root run:
 
-```
-python src/main.py path/to/image.jpg
+```bash
+python src/interface.py
 ```
 
-This will open the image, detect and crop the plate, run OCR, apply post‑processing, and log the candidate plate texts it finds. To evaluate the full pipeline on the included validation set, run:
+This will launch a Gradio web UI (a local URL will be printed). In the UI you can upload an image and the app will show:
+- Original image
+- Cropped plate image (detected by YOLO)
+- OCR result (normalized text)
 
-```
-python src/evaluate.py
-```
+- Output components are positional. The return value of the `get_plate_flow` function must match the `outputs` components in order and type.
 
-The evaluation prints a short summary that includes detector recall, OCR accuracy, how often the post‑processor corrected the OCR to a match, and an overall end‑to‑end score. If you want to fine‑tune a detector, the project points to the included weights at `outputs/runs/detect/train/weights/best.pt` and exposes a minimal training helper via `Detector.finetune(...)` in `src/detect.py`; alternatively, you can use the Ultralytics CLI (`yolo detect train ...`) with your own data configuration.
+## Troubleshooting
+- "No license plates were detected": ensure the detector model file path is correct and the input image contains a clear plate. Check logs for errors loading the model.
+- Empty images in the web UI: verify the type and contents of the `file` object passed to the processing function (see debug print above). You can force `gr.File(type="filepath")` to always get a filesystem path.
+- GPU issues: make sure CUDA drivers are installed and your environment has the correct `torch`/CUDA build.
 
-Configuration is centralized so tweaks are easy: change the YOLO weights path in `src/constants.py`, adjust the detection threshold in `src/detect.py`, and extend or modify the Portuguese plate patterns and confusion pairs in `src/constants.py` if your data differs. The current approach has some limitations worth noting. The post‑processing logic is tuned for Portuguese formats and may not generalize to other countries without changes. The OCR model is European‑centric, so plates from other regions may require a different model. The interface targets single images from the command line rather than video streams or a real‑time UI.
+
+## License & Contact
+Pick a license for the project (e.g. MIT) and add contact or contribution instructions here.
