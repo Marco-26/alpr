@@ -13,12 +13,10 @@ def get_plate_flow(file):
     if not plate_crops:
       return None, None, "No license plates were detected in the image."
     
-    # Assuming we take the first detected plate for simplicity
     plate_img = plate_crops[0].resize((200, 100))
     gray_plate = plate_crops[0].convert("L")
 
-    ocr_result = extractor.inference(np.array(gray_plate))
-    plates = ocr_result.plates
+    plates = extractor.inference(np.array(gray_plate))
     plate_text = plates[0] if plates else "No text recognized."
     return img, plate_img, plate_text
   
@@ -27,7 +25,7 @@ def get_plate_flow(file):
 demo = gr.Interface(
   fn=get_plate_flow,
   inputs="file",
-  outputs=["image", "image", "text"],
+  outputs=[gr.Image(label="Original image"), gr.Image(label="Cropped plate detected by YOLO"), gr.Textbox(label="OCR result")],
   title="ALPR System",
   description=(
     "Upload an image, the app will detect and crop the licence plate, "
