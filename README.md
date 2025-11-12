@@ -52,7 +52,3 @@ This will launch a Gradio web UI (a local URL will be printed). In the UI you ca
 - "No license plates were detected": ensure the detector model file path is correct and the input image contains a clear plate. Check logs for errors loading the model.
 - Empty images in the web UI: verify the type and contents of the `file` object passed to the processing function (see debug print above). You can force `gr.File(type="filepath")` to always get a filesystem path.
 - GPU issues: make sure CUDA drivers are installed and your environment has the correct `torch`/CUDA build.
-
-
-## License & Contact
-Pick a license for the project (e.g. MIT) and add contact or contribution instructions here.
